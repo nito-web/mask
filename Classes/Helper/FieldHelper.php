@@ -35,8 +35,6 @@ class FieldHelper
 {
 
     /**
-     * StorageRepository
-     *
      * @var \MASK\Mask\Domain\Repository\StorageRepository
      */
     protected $storageRepository;
@@ -44,10 +42,12 @@ class FieldHelper
     /**
      * @param \MASK\Mask\Domain\Repository\StorageRepository $storageRepository
      */
-    public function __construct(\MASK\Mask\Domain\Repository\StorageRepository $storageRepository = NULL)
+    public function __construct(\MASK\Mask\Domain\Repository\StorageRepository $storageRepository = null)
     {
         if (!$storageRepository) {
-            $this->storageRepository = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('MASK\\Mask\\Domain\\Repository\\StorageRepository');
+            $this->storageRepository = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+                \MASK\Mask\Domain\Repository\StorageRepository::class
+            );
         } else {
             $this->storageRepository = $storageRepository;
         }
@@ -93,7 +93,7 @@ class FieldHelper
     {
         $storage = $this->storageRepository->load();
         $fieldIndex = -1;
-        if (count($storage[$type]["elements"][$elementKey]["columns"] ?? []) > 0) {
+        if (is_array($storage[$type]["elements"][$elementKey]["columns"])) {
             foreach ($storage[$type]["elements"][$elementKey]["columns"] as $index => $column) {
                 if ($column == $fieldKey) {
                     $fieldIndex = $index;
@@ -153,14 +153,13 @@ class FieldHelper
         // And decide via different tca settings which formType it is
         switch ($tcaType) {
             case "input":
-                $formType = "String";
                 if (array_search(strtolower("int"), $evals) !== false) {
                     $formType = "Integer";
-                } else if (array_search(strtolower("double2"), $evals) !== false) {
+                } elseif (array_search(strtolower("double2"), $evals) !== false) {
                     $formType = "Float";
-                } else if (array_search(strtolower("date"), $evals) !== false) {
+                } elseif (array_search(strtolower("date"), $evals) !== false) {
                     $formType = "Date";
-                } else if (array_search(strtolower("datetime"), $evals) !== false) {
+                } elseif (array_search(strtolower("datetime"), $evals) !== false) {
                     $formType = "Datetime";
                 } else {
                     if (isset($tca["config"]["renderType"]) && $tca["config"]["renderType"] === "inputLink") {
@@ -222,10 +221,9 @@ class FieldHelper
             case "flex":
                 break;
             case "inline":
-                $formType = "Inline";
-                if ($tca["config"]["foreign_table"] == "sys_file_reference") {
+                if ($tca["config"]["foreign_table"] === "sys_file_reference") {
                     $formType = "File";
-                } else if($tca["config"]["foreign_table"] == "tt_content") {
+                } elseif ($tca["config"]["foreign_table"] === "tt_content") {
                     $formType = "Content";
                 } else {
                     $formType = "Inline";
@@ -239,6 +237,7 @@ class FieldHelper
         }
         return $formType;
     }
+
 
     /**
      * Returns type of field (tt_content or pages)
@@ -268,11 +267,9 @@ class FieldHelper
         foreach ($types as $type) {
             if ($storage[$type]["elements"] && !$found) {
                 foreach ($storage[$type]["elements"] as $element) {
-
                     // if this is the element we search for, or no special element was given,
                     // and the element has columns and the fieldType wasn't found yet
                     if (($element["key"] == $elementKey || $elementKey == "") && $element["columns"] && !$found) {
-
                         foreach ($element["columns"] as $column) {
                             if ($column == $fieldKey && !$found) {
                                 $fieldType = $type;
@@ -281,13 +278,14 @@ class FieldHelper
                         }
                     }
                 }
-            } else if (is_array($storage[$type]["tca"][$fieldKey])) {
+            } elseif (is_array($storage[$type]["tca"][$fieldKey])) {
                 $fieldType = $type;
                 $found = true;
             }
         }
         return $fieldType;
     }
+
 
     /**
      * Returns all fields of a type from a table
